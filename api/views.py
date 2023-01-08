@@ -1,9 +1,13 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .utils import getUsers, createUser, getUser, deleteUser, getNotes, createNote, getUserNotes, getNote, deleteNote
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from .utils import getUsers, createUser, getUser, deleteUser, getNotes, createNote, getUserNotes, getNote, deleteNote, getLogin
 
 '''
+POST   /api/login
+
 GET    /api/user
 POST   /api/user
 
@@ -24,6 +28,15 @@ DELETE /api/note/<pk>
 @api_view(['GET'])
 def getRoutes(request):
     routes = [
+        {
+            'Endpoint': '/login/',
+            'method': 'POST',
+            'body': {
+                'username': "",
+                'password': ""
+            },
+            'description': 'Authenticates a user'
+        },
         {
             'Endpoint': '/user/',
             'method': 'GET',
@@ -87,6 +100,11 @@ def getRoutes(request):
     ]
     return Response(routes)
 
+@api_view(['POST'])
+def login(request):
+    if request.method == 'POST':
+        return getLogin(request.data)
+
 @api_view(['GET', 'POST'])
 def profiles(request):
     if request.method == 'GET':
@@ -101,21 +119,25 @@ def profile(request, pk):
     elif request.method == 'DELETE':
         return deleteUser(pk)
 
-@api_view(['GET', 'POST'])
+@api_view(['GET'])
 def notes(request):
     if request.method == 'GET':
         return getNotes()
 
 @api_view(['GET', 'POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def userNotes(request, pk):
     if request.method == 'GET':
-        return getUserNotes(pk)
+        return getUserNotes(request.user, pk)
     elif request.method == 'POST':
-        return createNote(request.data, pk)
+        return createNote(request.data, request.user, pk)
 
 @api_view(['GET', 'DELETE'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def note(request, pk):
     if request.method == 'GET':
-        return getNote(pk)
+        return getNote(request.user, pk)
     elif request.method == 'DELETE':
-        return deleteNote(pk)
+        return deleteNote(request.user, pk)
