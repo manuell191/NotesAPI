@@ -10,6 +10,8 @@ Django in the backend and React in the front end. This is a
 RESTful API with the following methods and endpoints:
 
 ```
+POST   /api/login
+
 GET    /api/user
 POST   /api/user
 
@@ -27,7 +29,50 @@ DELETE /api/note/<pk>
 
 
 
+## Technologies used
+
+This project uses Python and Django to handle the routes and logic,
+and for the REST API, this project uses the Django REST Framework.
+User authentication in this project uses web tokens and uses the
+Django REST Framework's built in authentication module, specifically
+using TokenAuthentication. Currently the project has extra thing built
+in because it was originally supposed to use JWT for token authentication.
+
+
+
 ## User Methods
+
+### /api/login
+
+#### POST Method
+
+`POST /api/login` takes in a json request in the following format:
+```
+{
+  "username": "",
+  "password": ""
+}
+```
+
+If the username and password match, the endpoint will return a token
+in the following format:
+```
+{
+  "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b"
+}
+```
+
+This token should then be stored in local storage, and used to authenticate
+the user for certain api calls. The requests that require the authentication
+token should include an `Authorization` HTTP header. The key should be prefixed
+by the string literal "Token", with whitespace separating the two strings, like
+in the following example:
+```
+Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
+```
+
+This token is needed for all endpoints marked in this documentation as
+`REQUIRES TOKEN`.
 
 ### /api/user
 
@@ -119,11 +164,22 @@ In json, it will appear as the id from the `Profile` object.
 
 ### /api/note/<id>
 
-#### GET Method
+#### GET Method (REQIRES TOKEN)
 
 `GET /api/note/<id>` takes a number replacing `<id>` and returns
-a note with id matching that number. The response will be returned
-in the following format:
+a note with id matching that number. This call alone will return
+a `403 Forbidden` response, so the HTTP header should include an
+`Authorization` header. The key should be prefixed by the string 
+literal "Token", with whitespace separating the two strings, like
+in the following example:
+```
+Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
+```
+
+This format should be kept for any API endpoint in this documentation
+that explicitly says that it is needed.
+
+The response for this endpoint will be returned in the following format:
 ```
 {
   "id": "2",
@@ -135,7 +191,7 @@ in the following format:
 This specific response would come from `GET /api/note/2` since
 the id is equal to 2.
 
-#### DELETE Method
+#### DELETE Method (REQUIRES TOKEN)
 
 `DELETE /api/note/<id>` takes a number replacing `<id>` and
 deletes a note with id matching that number. This will delete
@@ -149,7 +205,7 @@ come from `DELETE /api/user/2` since the id is equal to 2.
 
 ### /api/user/<id>/note
 
-#### GET Method
+#### GET Method (REQUIRES TOKEN)
 
 `GET /api/user/<id>/note` takes a number replacing `<id>`
 and returns all notes from a user with id matching that
@@ -166,7 +222,7 @@ This specific response could come from `GET /api/user/1/note`
 as long as the `{Profile object}` in this instance is a profile
 with the id of 1.
 
-#### POST Method
+#### POST Method (REQUIRES TOKEN)
 
 `POST /api/user/<id>/note` takes a number replacing
 `<id>` and will create a note for the user with id matching
